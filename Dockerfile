@@ -1,25 +1,20 @@
-FROM alpine:3.5
+FROM alpine:3.6
 
-ARG GSNOVA_PAAS_VER=0.26.3
+ENV VER=0.28.0 CERT_PEM=none KEY_PEM=none
 
 RUN \
-    apk add --no-cache --virtual .build-deps curl \
-    && mkdir -p /opt/gsnova \
-    && cd /opt/gsnova \
-    && curl -fSL https://github.com/yinqiwen/gsnova/releases/download/v$GSNOVA_PAAS_VER/gsnova_paas_linux_amd64-v$GSNOVA_PAAS_VER.tar.bz2 | tar xj  \
-    && cd ~ \
-    && apk del .build-deps 
+    apk add --no-cache --virtual  curl \
+    && mkdir -m 777 /gsnova \
+    && cd /gsnova \
+    && curl -fSL https://github.com/yinqiwen/gsnova/releases/download/v$VER/gsnova_server_linux_amd64-v$VER.tar.bz2 | tar xj  \
+    && rm -rf server.json \
+    && rm -rf gsnova_server_linux_amd64-v$VER.tar.bz2 \
+    && chgrp -R 0 /gsnova \
+    && chmod -R g+rwX /gsnova 
     
-ENV KEY=809240d3a021449f6e67aa73221d42df942a308a CERT_PEM=none KEY_PEM=none
-
+ADD server.json /gsnova/server.json    
 ADD entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh 
+ENTRYPOINT  /entrypoint.sh 
 
-RUN chgrp -R 0 /opt/gsnova \
-    && chmod -R g+rwX /opt/gsnova \
-    && chmod +x /entrypoint.sh
-
-ENTRYPOINT  sh /entrypoint.sh
-
-EXPOSE 8080
-
-
+EXPOSE 8080 8088
